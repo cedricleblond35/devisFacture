@@ -1,0 +1,98 @@
+services:
+  # --- Backend Symfony ---
+  backend-symfony:
+    image: shinsenter/symfony:latest
+    container_name: backend-symfony
+    restart: unless-stopped
+    working_dir: /var/www/html
+    ports:
+      - "80:8000"
+    volumes:
+      - ./backend-symfony:/var/www/html:cached
+    environment:
+      - APP_ENV=dev
+      - APP_DEBUG=1
+      - DATABASE_URL=mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/{MYSQL_DATABASE}?serverVersion=8.0
+      #- DATABASE_URL=mysql://symfony:symfony@mysql:3306/devisfacture
+      #- DATABASE_URL=mysql://symfony:password@mysql:3306/symfony_db?serverVersion=8.0
+    command: php -S 0.0.0.0:8000 -t /var/www/html/public
+    depends_on:
+      - mysql
+    networks:
+      - symfony_network
+
+  # --- Frontend Angular ---
+  frontend-angular:
+    image: node:20-alpine
+    container_name: frontend-angular
+    working_dir: /app
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./frontend-angular:/app:cached
+    command: sh -c "npm install && npm start"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend-symfony
+    networks:
+      - symfony_network
+
+  # --- Service Go ---
+  service-go:
+    image: golang:tip-alpine3.22
+    container_name: service-go
+    working_dir: /app
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./service-go:/app:cached
+    depends_on:
+      - backend-symfony
+    environment:
+      - SYMFONY_API_URL=http://backend-symfony:8080
+      - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
+      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
+    networks:
+      - symfony_network
+
+  # --- MySQL ---
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-08
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - symfony_network
+
+  # --- phpMyAdmin ---
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin-08
+    restart: unless-stopped
+    environment:
+      - PMA_HOST=mysql-08
+      - PMA_USER=${MYSQL_USER}
+      - PMA_PASSWORD=${MYSQL_PASSWORD}
+      - PMA_ARBITRARY=1
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql
+    networks:
+      - symfony_network
+
+volumes:
+  mysql_data:
+
+networks:
+  symfony_network:
+    driver: bridge

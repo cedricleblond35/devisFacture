@@ -1,0 +1,15 @@
+
+.env
+backend-symfony/.env
+backend-symfony/.env.local
+backend-symfony/.env.*.local
+backend-symfony/config/secrets/prod/prod.decrypt.private.php
+backend-symfony/public/bundles/
+backend-symfony/var/
+backend-symfony/vendor/
+
+
+frontend-angular/.env
+frontend-angular/.env.local
+service-go/.env
+service-go/.env.local
