@@ -13,8 +13,6 @@ services:
       - APP_ENV=dev
       - APP_DEBUG=1
       - DATABASE_URL=mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/{MYSQL_DATABASE}?serverVersion=8.0
-      #- DATABASE_URL=mysql://symfony:symfony@mysql:3306/devisfacture
-      #- DATABASE_URL=mysql://symfony:password@mysql:3306/symfony_db?serverVersion=8.0
     command: php -S 0.0.0.0:8000 -t /var/www/html/public
     depends_on:
       - mysql
